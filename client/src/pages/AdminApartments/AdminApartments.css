@@ -1,0 +1,316 @@
+.admin-apartments-page {
+  min-height: 100vh;
+  padding: 40px;
+  background-color: #f5f7fb;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.admin-apartments-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.admin-apartments-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.admin-apartments-header p {
+  margin-top: 8px;
+  font-size: 17px;
+  color: #6b7280;
+}
+
+/* =========================
+   CREATE APARTMENT
+========================= */
+
+.create-apartment-card {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto 40px;
+
+  background-color: #ffffff;
+
+  padding: 30px;
+
+  border-radius: 14px;
+
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+
+  box-sizing: border-box;
+}
+
+.create-apartment-card h2 {
+  margin-top: 0;
+  margin-bottom: 25px;
+
+  text-align: center;
+
+  font-size: 24px;
+  color: #1f2937;
+}
+
+/* Form */
+
+.apartment-form-group {
+  display: flex;
+  flex-direction: column;
+
+  margin-bottom: 20px;
+}
+
+.apartment-form-group label {
+  margin-bottom: 8px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  color: #374151;
+}
+
+.apartment-form-group input {
+  width: 100%;
+
+  padding: 14px;
+
+  border: 1px solid #d1d5db;
+
+  border-radius: 8px;
+
+  font-size: 15px;
+
+  outline: none;
+
+  box-sizing: border-box;
+}
+
+.apartment-form-group input:focus {
+  border-color: #2563eb;
+}
+
+/* Create Button */
+
+.create-apartment-button {
+  display: block;
+
+  margin: 25px auto 0;
+
+  border: none;
+
+  background-color: #2563eb;
+
+  color: #ffffff;
+
+  padding: 13px 24px;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  font-size: 15px;
+
+  font-weight: 600;
+}
+
+.create-apartment-button:hover {
+  background-color: #1d4ed8;
+}
+
+/* =========================
+   ALL APARTMENTS
+========================= */
+
+.apartments-list {
+  width: 100%;
+
+  margin-top: 35px;
+}
+
+.apartments-list h2 {
+  margin-bottom: 25px;
+
+  text-align: center;
+
+  font-size: 28px;
+
+  font-weight: 700;
+
+  color: #1f2937;
+}
+
+/* Table Container */
+
+.apartments-table-wrapper {
+  width: 100%;
+
+  background-color: #ffffff;
+
+  border-radius: 18px;
+
+  overflow-x: auto;
+
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+/* Table */
+
+.apartments-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  min-width: 650px;
+}
+
+/* Table Header */
+
+.apartments-table th {
+  background-color: #f8fafc;
+
+  padding: 22px 25px;
+
+  text-align: left;
+
+  font-size: 17px;
+
+  font-weight: 700;
+
+  color: #374151;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Table Body */
+
+.apartments-table td {
+  padding: 24px 25px;
+
+  font-size: 16px;
+
+  color: #4b5563;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Remove border from last row */
+
+.apartments-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Hover */
+
+.apartments-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+/* Apartment Number */
+
+.apartment-number {
+  font-weight: 600;
+
+  color: #1f2937 !important;
+}
+
+/* =========================
+   STATUS
+========================= */
+
+.status-occupied,
+.status-available {
+  display: inline-block;
+
+  padding: 9px 18px;
+
+  border-radius: 25px;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  text-transform: capitalize;
+}
+
+/* Occupied */
+
+.status-occupied {
+  background-color: #fee2e2;
+
+  color: #dc2626;
+}
+
+/* Available */
+
+.status-available {
+  background-color: #f3f4f6;
+
+  color: #374151;
+}
+
+/* =========================
+   LOADING / EMPTY
+========================= */
+
+.loading-apartments {
+  text-align: center;
+
+  color: #6b7280;
+
+  font-size: 16px;
+}
+
+.empty-apartments {
+  background-color: #ffffff;
+
+  padding: 35px;
+
+  border-radius: 14px;
+
+  text-align: center;
+
+  color: #6b7280;
+
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 650px) {
+  .admin-apartments-page {
+    padding: 20px;
+  }
+
+  .admin-apartments-header h1 {
+    font-size: 26px;
+  }
+
+  .create-apartment-card {
+    padding: 20px;
+  }
+
+  .apartments-list h2 {
+    font-size: 24px;
+  }
+
+  .apartments-table th,
+  .apartments-table td {
+    padding: 15px;
+
+    font-size: 14px;
+  }
+
+  .status-occupied,
+  .status-available {
+    padding: 7px 12px;
+
+    font-size: 12px;
+  }
+}

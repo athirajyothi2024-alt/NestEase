@@ -1,0 +1,153 @@
+.admin-notices-page {
+  min-height: 100vh;
+  padding: 40px;
+  background-color: #f5f7fb;
+}
+
+.admin-notices-header {
+  margin-bottom: 30px;
+}
+
+.admin-notices-header h1 {
+  margin: 0;
+  font-size: 30px;
+  color: #1f2937;
+}
+
+.admin-notices-header p {
+  margin-top: 8px;
+  color: #6b7280;
+}
+
+/* Create Notice */
+
+.create-notice-card {
+  max-width: 850px;
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 35px;
+}
+
+.create-notice-card h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+.notice-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+.notice-form-group label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.notice-form-group input,
+.notice-form-group textarea {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+}
+
+.notice-form-group input:focus,
+.notice-form-group textarea:focus {
+  border-color: #2563eb;
+}
+
+.create-notice-button {
+  border: none;
+  background-color: #2563eb;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.create-notice-button:hover {
+  background-color: #1d4ed8;
+}
+
+/* Notices List */
+
+.admin-notices-list {
+  max-width: 850px;
+}
+
+.admin-notices-list h2 {
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+.admin-notice-card {
+  background-color: #ffffff;
+  padding: 22px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.admin-notice-card h3 {
+  margin: 0 0 10px;
+  color: #1f2937;
+}
+
+.admin-notice-card p {
+  margin: 0 0 12px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.admin-notice-card span {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.delete-notice-button {
+  border: none;
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 9px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.delete-notice-button:hover {
+  background-color: #fecaca;
+}
+
+.empty-admin-notices {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* Mobile */
+
+@media (max-width: 650px) {
+  .admin-notices-page {
+    padding: 20px;
+  }
+
+  .admin-notice-card {
+    flex-direction: column;
+  }
+}

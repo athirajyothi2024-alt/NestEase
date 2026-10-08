@@ -1,0 +1,197 @@
+.resident-dashboard {
+  min-height: 100vh;
+  display: flex;
+  background: #f5f7fb;
+}
+
+.resident-sidebar {
+  width: 250px;
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 30px 18px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border-right: 1px solid #eef0f4;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04);
+}
+
+.resident-logo {
+  font-size: 27px;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 42px;
+  padding-left: 14px;
+  letter-spacing: -0.5px;
+}
+
+.resident-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.nav-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 13px 16px;
+  border-radius: 9px;
+  font-size: 15px;
+  cursor: pointer;
+  color: #4b5563;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: #f3f6fb;
+  color: #2563eb;
+}
+
+.nav-item.active {
+  background-color: #e8f0ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.logout-button {
+  width: 100%;
+  margin-top: auto;
+  border: none;
+  background-color: #fff1f2;
+  color: #dc2626;
+  padding: 13px 16px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: #fee2e2;
+}
+
+.resident-main {
+  flex: 1;
+  padding: 48px 50px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.welcome-section {
+  margin-bottom: 38px;
+}
+
+.welcome-section h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: -0.5px;
+}
+
+.welcome-section p {
+  margin: 9px 0 0;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+/* =========================
+   Dashboard Cards
+========================= */
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1100px;
+}
+
+.dashboard-card {
+  background-color: #ffffff;
+  padding: 28px;
+  border-radius: 15px;
+  border: 1px solid #eef0f4;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-card h3 {
+  margin: 0 0 17px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.dashboard-card p {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.dashboard-card span {
+  display: block;
+  margin-top: 9px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .resident-sidebar {
+    width: 220px;
+  }
+
+  .resident-main {
+    padding: 35px 30px;
+  }
+
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .resident-dashboard {
+    flex-direction: column;
+  }
+
+  .resident-sidebar {
+    width: 100%;
+    min-height: auto;
+    padding: 20px;
+  }
+
+  .resident-logo {
+    margin-bottom: 20px;
+  }
+
+  .resident-nav {
+    gap: 5px;
+  }
+
+  .logout-button {
+    margin-top: 20px;
+  }
+
+  .resident-main {
+    padding: 30px 20px;
+  }
+
+  .welcome-section h1 {
+    font-size: 27px;
+  }
+
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+}
