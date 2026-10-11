@@ -1,26 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './AdminResidents.css';
 
 const AdminResidents = () => {
+  const navigate = useNavigate();
+
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addingResident, setAddingResident] = useState(false);
 
-  // Add resident form
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
 
-  const [addingResident, setAddingResident] = useState(false);
+  const token = localStorage.getItem('token');
 
   const fetchResidents = async () => {
     try {
-      const token = localStorage.getItem('token');
-
       const response = await fetch(
         'http://localhost:5001/api/users/residents',
         {
-          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -34,7 +34,7 @@ const AdminResidents = () => {
         return;
       }
 
-      setResidents(data.residents);
+      setResidents(data.residents || []);
     } catch (error) {
       console.error('Fetch residents error:', error);
       alert('Unable to connect to server');
@@ -53,8 +53,6 @@ const AdminResidents = () => {
     try {
       setAddingResident(true);
 
-      const token = localStorage.getItem('token');
-
       const response = await fetch(
         'http://localhost:5001/api/users/residents',
         {
@@ -64,10 +62,10 @@ const AdminResidents = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            name,
-            email,
+            name: name.trim(),
+            email: email.trim(),
             password,
-            phone,
+            phone: phone.trim(),
           }),
         }
       );
@@ -81,14 +79,12 @@ const AdminResidents = () => {
 
       alert('Resident added successfully!');
 
-      // Clear form
       setName('');
       setEmail('');
       setPassword('');
       setPhone('');
 
-      // Refresh residents list
-      fetchResidents();
+      await fetchResidents();
     } catch (error) {
       console.error('Add resident error:', error);
       alert('Unable to connect to server');
@@ -99,116 +95,173 @@ const AdminResidents = () => {
 
   return (
     <div className="admin-residents-page">
-      <div className="admin-residents-header">
-        <h1>Manage Residents</h1>
-        <p>Add and manage residents in your apartment</p>
-      </div>
-
-      {/* Add Resident Form */}
-      <div className="add-resident-card">
-        <h2>Add New Resident</h2>
-
-        <form onSubmit={handleAddResident}>
-          <div className="resident-form-row">
-            <div className="resident-form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                placeholder="Enter resident name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="resident-form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                placeholder="Enter email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="resident-form-row">
-            <div className="resident-form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                placeholder="Create password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="resident-form-group">
-              <label>Phone</label>
-              <input
-                type="text"
-                placeholder="Enter phone number"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="add-resident-button"
-            disabled={addingResident}
-          >
-            {addingResident ? 'Adding...' : 'Add Resident'}
-          </button>
-        </form>
-      </div>
-
-      {/* Residents List */}
-
-      {loading && <p className="loading-residents">Loading residents...</p>}
-
-      {!loading && residents.length === 0 && (
-        <div className="empty-residents">
-          <h3>No Residents</h3>
-          <p>There are no residents registered yet.</p>
+      {/* Top header */}
+      <header className="residents-topbar">
+        <div className="residents-breadcrumb">
+          <span>Admin Portal</span>
+          <span className="breadcrumb-divider">/</span>
+          <span className="breadcrumb-current">Residents</span>
         </div>
-      )}
 
-      {!loading && residents.length > 0 && (
-        <div className="residents-section">
-          <h2>Registered Residents</h2>
+        <button
+          type="button"
+          className="residents-dashboard-button"
+          onClick={() => navigate('/admin')}
+        >
+          ← Dashboard
+        </button>
+      </header>
 
-          <div className="residents-table-wrapper">
-            <table className="residents-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Apartment</th>
-                </tr>
-              </thead>
+      <main className="residents-main">
+        {/* Page heading */}
+        <section className="residents-page-heading">
+          <div>
+            <span className="residents-eyebrow">COMMUNITY MANAGEMENT</span>
 
-              <tbody>
-                {residents.map(resident => (
-                  <tr key={resident._id}>
-                    <td className="resident-name">{resident.name}</td>
+            <h1>Manage Residents</h1>
 
-                    <td>{resident.email}</td>
+            <p>Add and manage residents in your apartment community.</p>
+          </div>
+        </section>
 
-                    <td>{resident.phone || 'Not provided'}</td>
+        {/* Add resident form */}
+        <section className="resident-form-card">
+          <div className="resident-card-heading">
+            <h2>Add New Resident</h2>
+            <p>Create a resident account for your community.</p>
+          </div>
 
-                    <td>{resident.apartmentNumber || 'Not assigned'}</td>
+          <form onSubmit={handleAddResident}>
+            <div className="resident-form-grid">
+              <div className="resident-form-group">
+                <label htmlFor="resident-name">Full Name</label>
+
+                <input
+                  id="resident-name"
+                  type="text"
+                  placeholder="Enter resident name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="resident-form-group">
+                <label htmlFor="resident-email">Email Address</label>
+
+                <input
+                  id="resident-email"
+                  type="email"
+                  placeholder="Enter email address"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="resident-form-group">
+                <label htmlFor="resident-password">Password</label>
+
+                <input
+                  id="resident-password"
+                  type="password"
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="resident-form-group">
+                <label htmlFor="resident-phone">Phone Number</label>
+
+                <input
+                  id="resident-phone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="add-resident-button"
+              disabled={addingResident}
+            >
+              {addingResident ? 'Adding Resident...' : '+ Add Resident'}
+            </button>
+          </form>
+        </section>
+
+        {/* Registered residents */}
+        <section className="registered-residents-section">
+          <div className="registered-residents-heading">
+            <div>
+              <h2>Registered Residents</h2>
+              <p>View resident details and apartment assignments.</p>
+            </div>
+
+            <span className="resident-count">
+              {residents.length}{' '}
+              {residents.length === 1 ? 'resident' : 'residents'}
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="residents-empty-state">Loading residents...</div>
+          ) : residents.length === 0 ? (
+            <div className="residents-empty-state">
+              <h3>No residents yet</h3>
+              <p>Add a resident using the form above.</p>
+            </div>
+          ) : (
+            <div className="residents-table-container">
+              <table className="residents-table">
+                <thead>
+                  <tr>
+                    <th>Resident</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Apartment</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                </thead>
+
+                <tbody>
+                  {residents.map(resident => (
+                    <tr key={resident._id}>
+                      <td>
+                        <div className="resident-name-cell">
+                          <div className="resident-initial">
+                            {(resident.name || 'R').charAt(0).toUpperCase()}
+                          </div>
+
+                          <strong>{resident.name}</strong>
+                        </div>
+                      </td>
+
+                      <td>{resident.email}</td>
+
+                      <td>{resident.phone || 'Not provided'}</td>
+
+                      <td>
+                        <span
+                          className={`resident-apartment-badge ${
+                            resident.apartmentNumber ? 'assigned' : ''
+                          }`}
+                        >
+                          {resident.apartmentNumber || 'Not assigned'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 };

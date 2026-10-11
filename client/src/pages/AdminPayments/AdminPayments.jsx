@@ -1,365 +1,377 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './AdminPayments.css';
 
 const AdminPayments = () => {
+  const navigate = useNavigate();
+
   const [payments, setPayments] = useState([]);
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
 
-  const [residentId, setResidentId] = useState('');
-  const [apartmentNumber, setApartmentNumber] = useState('');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [formData, setFormData] = useState({
+    residentId: '',
+    apartmentNumber: '',
+    amount: '',
+    dueDate: '',
+    description: '',
+  });
 
   const token = localStorage.getItem('token');
 
-  const fetchPayments = async () => {
+  const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/payments', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      setLoading(true);
+      setError('');
 
-      const data = await response.json();
+      const [paymentsResponse, residentsResponse] = await Promise.all([
+        fetch('http://localhost:5001/api/payments', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch('http://localhost:5001/api/users/residents', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      if (!response.ok) {
-        alert(data.message || 'Failed to fetch payments');
-        return;
+      const paymentsData = await paymentsResponse.json();
+      const residentsData = await residentsResponse.json();
+
+      if (!paymentsResponse.ok) {
+        throw new Error(paymentsData.message || 'Failed to load payments');
       }
 
-      setPayments(data.payments);
-    } catch (error) {
-      console.error('Fetch payments error:', error);
-      alert('Unable to connect to server');
+      if (!residentsResponse.ok) {
+        throw new Error(residentsData.message || 'Failed to load residents');
+      }
+
+      setPayments(paymentsData.payments || []);
+      setResidents(residentsData.residents || []);
+    } catch (err) {
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchResidents = async () => {
-    try {
-      const response = await fetch(
-        'http://localhost:5001/api/users/residents',
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || 'Failed to fetch residents');
-        return;
-      }
-
-      setResidents(data.residents);
-    } catch (error) {
-      console.error('Fetch residents error:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchPayments();
-    fetchResidents();
+    fetchData();
   }, []);
 
   const handleResidentChange = e => {
-    const selectedId = e.target.value;
-
-    setResidentId(selectedId);
-
+    const residentId = e.target.value;
     const selectedResident = residents.find(
-      resident => resident._id === selectedId
+      resident => resident._id === residentId
     );
 
-    if (selectedResident) {
-      setApartmentNumber(selectedResident.apartmentNumber || '');
-    } else {
-      setApartmentNumber('');
-    }
+    setFormData(prev => ({
+      ...prev,
+      residentId,
+      apartmentNumber: selectedResident?.apartmentNumber || '',
+    }));
   };
 
-  const handleCreatePayment = async e => {
+  const handleChange = e => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async e => {
     e.preventDefault();
+    setError('');
 
     try {
-      setCreating(true);
-
       const response = await fetch('http://localhost:5001/api/payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          residentId,
-          apartmentNumber,
-          amount: Number(amount),
-          description,
-          dueDate,
-        }),
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || 'Failed to create payment');
-        return;
+        throw new Error(data.message || 'Failed to create payment');
       }
 
       alert('Payment created successfully!');
 
-      setResidentId('');
-      setApartmentNumber('');
-      setAmount('');
-      setDescription('');
-      setDueDate('');
+      setFormData({
+        residentId: '',
+        apartmentNumber: '',
+        amount: '',
+        dueDate: '',
+        description: '',
+      });
 
-      fetchPayments();
-    } catch (error) {
-      console.error('Create payment error:', error);
-      alert('Unable to connect to server');
-    } finally {
-      setCreating(false);
+      await fetchData();
+    } catch (err) {
+      setError(err.message || 'Failed to create payment');
     }
   };
 
-  const handleMarkPaid = async paymentId => {
+  const updatePaymentStatus = async paymentId => {
     try {
       const response = await fetch(
         `http://localhost:5001/api/payments/${paymentId}/pay`,
         {
           method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || 'Failed to update payment');
-        return;
+        throw new Error(data.message || 'Failed to update payment');
       }
 
-      alert('Payment marked as paid!');
-      fetchPayments();
-    } catch (error) {
-      console.error('Mark paid error:', error);
-      alert('Unable to connect to server');
+      await fetchData();
+    } catch (err) {
+      setError(err.message || 'Failed to update payment status');
     }
   };
 
-  const handleDelete = async paymentId => {
-    const confirmDelete = window.confirm(
-      'Are you sure you want to delete this payment?'
-    );
-
-    if (!confirmDelete) return;
+  const deletePayment = async paymentId => {
+    if (!window.confirm('Are you sure you want to delete this payment?')) {
+      return;
+    }
 
     try {
       const response = await fetch(
         `http://localhost:5001/api/payments/${paymentId}`,
         {
           method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message || 'Failed to delete payment');
-        return;
+        throw new Error(data.message || 'Failed to delete payment');
       }
 
-      alert('Payment deleted successfully!');
-      fetchPayments();
-    } catch (error) {
-      console.error('Delete payment error:', error);
-      alert('Unable to connect to server');
+      await fetchData();
+    } catch (err) {
+      setError(err.message || 'Failed to delete payment');
     }
+  };
+
+  const formatDate = date => {
+    if (!date) return '—';
+
+    return new Date(date).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   };
 
   return (
     <div className="admin-payments-page">
-      <div className="admin-payments-header">
-        <h1>Manage Payments</h1>
-        <p>Create and manage apartment payments</p>
-      </div>
+      <header className="admin-payments-header">
+        <div className="admin-payments-breadcrumb">
+          <span>Admin Portal</span>
+          <span className="breadcrumb-divider">/</span>
+          <span>Payments</span>
+        </div>
 
-      {/* Create Payment */}
+        <button
+          className="payments-dashboard-button"
+          onClick={() => navigate('/admin')}
+        >
+          ← Dashboard
+        </button>
+      </header>
 
-      <div className="create-payment-card">
-        <h2>Create Payment</h2>
+      <main className="admin-payments-content">
+        <section className="payments-page-heading">
+          <span className="payments-eyebrow">FINANCIAL MANAGEMENT</span>
+          <h1>Manage Payments</h1>
+          <p>Create and manage apartment payments.</p>
+        </section>
 
-        <form onSubmit={handleCreatePayment}>
-          <div className="payment-form-row">
-            <div className="payment-form-group">
-              <label>Resident</label>
+        {error && <div className="payments-error">{error}</div>}
 
-              <select
-                value={residentId}
-                onChange={handleResidentChange}
-                required
-              >
-                <option value="">Select resident</option>
-
-                {residents.map(resident => (
-                  <option key={resident._id} value={resident._id}>
-                    {resident.name} - {resident.email}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="payment-form-group">
-              <label>Apartment</label>
-
-              <input
-                type="text"
-                value={apartmentNumber}
-                placeholder="Apartment number"
-                readOnly
-                required
-              />
+        <section className="create-payment-card">
+          <div className="payment-section-heading">
+            <div>
+              <h2>Create Payment</h2>
+              <p>Assign a payment to a registered resident.</p>
             </div>
           </div>
 
-          <div className="payment-form-row">
-            <div className="payment-form-group">
-              <label>Amount</label>
+          <form onSubmit={handleSubmit} className="admin-payment-form">
+            <div className="payment-form-grid">
+              <div className="payment-form-group">
+                <label htmlFor="residentId">Resident</label>
+                <select
+                  id="residentId"
+                  name="residentId"
+                  value={formData.residentId}
+                  onChange={handleResidentChange}
+                  required
+                >
+                  <option value="">Select resident</option>
+                  {residents.map(resident => (
+                    <option key={resident._id} value={resident._id}>
+                      {resident.name} ({resident.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <input
-                type="number"
-                min="1"
-                placeholder="Enter amount"
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-                required
-              />
+              <div className="payment-form-group">
+                <label htmlFor="apartmentNumber">Apartment</label>
+                <input
+                  id="apartmentNumber"
+                  name="apartmentNumber"
+                  value={formData.apartmentNumber}
+                  onChange={handleChange}
+                  placeholder="Apartment number"
+                  required
+                />
+              </div>
+
+              <div className="payment-form-group">
+                <label htmlFor="amount">Amount (₹)</label>
+                <input
+                  id="amount"
+                  name="amount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  placeholder="Enter amount"
+                  required
+                />
+              </div>
+
+              <div className="payment-form-group">
+                <label htmlFor="dueDate">Due Date</label>
+                <input
+                  id="dueDate"
+                  name="dueDate"
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="payment-form-group payment-description-group">
+                <label htmlFor="description">Description</label>
+                <input
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Example: Monthly maintenance"
+                  required
+                />
+              </div>
             </div>
 
-            <div className="payment-form-group">
-              <label>Due Date</label>
+            <button type="submit" className="create-payment-button">
+              Create Payment
+            </button>
+          </form>
+        </section>
 
-              <input
-                type="date"
-                value={dueDate}
-                onChange={e => setDueDate(e.target.value)}
-                required
-              />
+        <section className="payment-records-section">
+          <div className="payment-records-heading">
+            <div>
+              <h2>Payment Records</h2>
+              <p>Review payment status and due dates.</p>
             </div>
+
+            <span className="payment-record-count">
+              {payments.length} {payments.length === 1 ? 'record' : 'records'}
+            </span>
           </div>
 
-          <div className="payment-form-group">
-            <label>Description</label>
-
-            <input
-              type="text"
-              placeholder="Example: Monthly maintenance"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="create-payment-button"
-            disabled={creating}
-          >
-            {creating ? 'Creating...' : 'Create Payment'}
-          </button>
-        </form>
-      </div>
-
-      {/* Payment List */}
-
-      <div className="payments-list">
-        <h2>Payment Records</h2>
-
-        {loading && <p className="loading-payments">Loading payments...</p>}
-
-        {!loading && payments.length === 0 && (
-          <div className="empty-payments">
-            <h3>No Payments</h3>
-            <p>No payment records have been created yet.</p>
-          </div>
-        )}
-
-        {!loading && payments.length > 0 && (
-          <div className="payments-table-wrapper">
-            <table className="payments-table">
-              <thead>
-                <tr>
-                  <th>Resident</th>
-                  <th>Apartment</th>
-                  <th>Description</th>
-                  <th>Amount</th>
-                  <th>Due Date</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {payments.map(payment => (
-                  <tr key={payment._id}>
-                    <td>{payment.resident?.name || 'Unknown'}</td>
-
-                    <td>{payment.apartmentNumber}</td>
-
-                    <td>{payment.description}</td>
-
-                    <td>₹{payment.amount}</td>
-
-                    <td>{new Date(payment.dueDate).toLocaleDateString()}</td>
-
-                    <td>
-                      <span
-                        className={
-                          payment.status === 'paid'
-                            ? 'payment-paid'
-                            : 'payment-pending'
-                        }
-                      >
-                        {payment.status}
-                      </span>
-                    </td>
-
-                    <td>
-                      {payment.status === 'pending' && (
-                        <button
-                          className="mark-paid-button"
-                          onClick={() => handleMarkPaid(payment._id)}
-                        >
-                          Mark Paid
-                        </button>
-                      )}
-
-                      <button
-                        className="delete-payment-button"
-                        onClick={() => handleDelete(payment._id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
+          {loading ? (
+            <div className="payments-message">Loading payments...</div>
+          ) : payments.length === 0 ? (
+            <div className="payments-message">No payment records found.</div>
+          ) : (
+            <div className="payments-table-wrapper">
+              <table className="admin-payments-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Resident</th>
+                    <th>Apartment</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                </thead>
+
+                <tbody>
+                  {payments.map(payment => (
+                    <tr key={payment._id}>
+                      <td className="payment-description-cell">
+                        {payment.description}
+                      </td>
+                      <td>
+                        {payment.resident?.name || 'Resident'}
+                        <span className="payment-secondary-text">
+                          {payment.resident?.email || ''}
+                        </span>
+                      </td>
+                      <td>{payment.apartmentNumber || '—'}</td>
+                      <td className="payment-amount-cell">
+                        ₹
+                        {Number(payment.amount).toLocaleString('en-IN', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </td>
+                      <td>{formatDate(payment.dueDate)}</td>
+                      <td>
+                        <span
+                          className={`payment-status-badge ${
+                            payment.status === 'paid' ? 'paid' : 'pending'
+                          }`}
+                        >
+                          {payment.status === 'paid' ? 'Paid' : 'Pending'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="payment-action-buttons">
+                          {payment.status !== 'paid' && (
+                            <button
+                              className="mark-paid-button"
+                              onClick={() => updatePaymentStatus(payment._id)}
+                            >
+                              Mark Paid
+                            </button>
+                          )}
+
+                          <button
+                            className="delete-payment-button"
+                            onClick={() => deletePayment(payment._id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 };

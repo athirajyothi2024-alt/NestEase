@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './AdminApartments.css';
 
 const AdminApartments = () => {
+  const navigate = useNavigate();
+
   const [apartments, setApartments] = useState([]);
   const [residents, setResidents] = useState([]);
 
@@ -10,17 +13,16 @@ const AdminApartments = () => {
   const [floor, setFloor] = useState('');
 
   const [selectedResidents, setSelectedResidents] = useState({});
-
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [assigningId, setAssigningId] = useState(null);
 
   // Fetch apartments
   const fetchApartments = async () => {
     try {
-      const token = localStorage.getItem('token');
-
       const response = await fetch('http://localhost:5001/api/apartments', {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
@@ -31,7 +33,7 @@ const AdminApartments = () => {
         return;
       }
 
-      setApartments(data.apartments);
+      setApartments(data.apartments || []);
     } catch (error) {
       console.error('Fetch apartments error:', error);
       alert('Unable to connect to server');
@@ -43,13 +45,11 @@ const AdminApartments = () => {
   // Fetch residents
   const fetchResidents = async () => {
     try {
-      const token = localStorage.getItem('token');
-
       const response = await fetch(
         'http://localhost:5001/api/users/residents',
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         }
       );
@@ -61,7 +61,7 @@ const AdminApartments = () => {
         return;
       }
 
-      setResidents(data.residents);
+      setResidents(data.residents || []);
     } catch (error) {
       console.error('Fetch residents error:', error);
       alert('Unable to connect to server');
@@ -74,21 +74,21 @@ const AdminApartments = () => {
   }, []);
 
   // Create apartment
-  const handleCreateApartment = async e => {
-    e.preventDefault();
+  const handleCreateApartment = async event => {
+    event.preventDefault();
 
     try {
-      const token = localStorage.getItem('token');
+      setCreating(true);
 
       const response = await fetch('http://localhost:5001/api/apartments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
-          apartmentNumber,
-          building,
+          apartmentNumber: apartmentNumber.trim(),
+          building: building.trim(),
           floor: Number(floor),
         }),
       });
@@ -106,10 +106,12 @@ const AdminApartments = () => {
       setBuilding('');
       setFloor('');
 
-      fetchApartments();
+      await fetchApartments();
     } catch (error) {
       console.error('Create apartment error:', error);
       alert('Unable to connect to server');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -131,7 +133,7 @@ const AdminApartments = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      setAssigningId(apartmentId);
 
       const response = await fetch(
         `http://localhost:5001/api/apartments/${apartmentId}/assign`,
@@ -139,11 +141,9 @@ const AdminApartments = () => {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-          body: JSON.stringify({
-            residentId,
-          }),
+          body: JSON.stringify({ residentId }),
         }
       );
 
@@ -156,81 +156,138 @@ const AdminApartments = () => {
 
       alert('Resident assigned successfully!');
 
-      fetchApartments();
+      setSelectedResidents(previous => {
+        const updated = { ...previous };
+        delete updated[apartmentId];
+        return updated;
+      });
+
+      await fetchApartments();
+      await fetchResidents();
     } catch (error) {
       console.error('Assign resident error:', error);
       alert('Unable to connect to server');
+    } finally {
+      setAssigningId(null);
     }
   };
 
   return (
     <div className="admin-apartments-page">
-      {/* Header */}
+      {/* Breadcrumb and Dashboard */}
+      <div className="apartments-breadcrumb-bar">
+        <div className="apartments-breadcrumb">
+          <span>Admin Portal</span>
+          <span className="breadcrumb-divider">/</span>
+          <span className="breadcrumb-current">Apartments</span>
+        </div>
 
-      <div className="admin-apartments-header">
+        <button
+          type="button"
+          className="apartments-dashboard-button"
+          onClick={() => navigate('/admin')}
+        >
+          <span className="dashboard-arrow">←</span>
+          Dashboard
+        </button>
+      </div>
+
+      {/* Page Heading */}
+      <div className="apartments-page-heading">
+        <span className="apartments-eyebrow">PROPERTY MANAGEMENT</span>
+
         <h1>Manage Apartments</h1>
 
-        <p>Create and manage apartment details</p>
+        <p>Create and manage apartment details.</p>
       </div>
 
-      {/* Create Apartment */}
-
-      <div className="create-apartment-card">
-        <h2>Create Apartment</h2>
+      {/* Create Apartment Card */}
+      <section className="create-apartment-card">
+        <div className="apartment-section-heading">
+          <div>
+            <h2>Create Apartment</h2>
+            <p>Add a new apartment to your community.</p>
+          </div>
+        </div>
 
         <form onSubmit={handleCreateApartment}>
-          <div className="apartment-form-group">
-            <label>Apartment Number</label>
+          <div className="apartment-form-grid">
+            <div className="apartment-form-group">
+              <label htmlFor="apartmentNumber">Apartment Number</label>
 
-            <input
-              type="text"
-              value={apartmentNumber}
-              onChange={e => setApartmentNumber(e.target.value)}
-              placeholder="Example: A-102"
-              required
-            />
+              <input
+                id="apartmentNumber"
+                type="text"
+                value={apartmentNumber}
+                onChange={event => setApartmentNumber(event.target.value)}
+                placeholder="Example: A-102"
+                required
+              />
+            </div>
+
+            <div className="apartment-form-group">
+              <label htmlFor="building">Building</label>
+
+              <input
+                id="building"
+                type="text"
+                value={building}
+                onChange={event => setBuilding(event.target.value)}
+                placeholder="Example: Block A"
+                required
+              />
+            </div>
+
+            <div className="apartment-form-group">
+              <label htmlFor="floor">Floor</label>
+
+              <input
+                id="floor"
+                type="number"
+                min="0"
+                step="1"
+                value={floor}
+                onChange={event => setFloor(event.target.value)}
+                placeholder="Example: 1"
+                required
+              />
+            </div>
           </div>
 
-          <div className="apartment-form-group">
-            <label>Building</label>
-
-            <input
-              type="text"
-              value={building}
-              onChange={e => setBuilding(e.target.value)}
-              placeholder="Example: Block A"
-              required
-            />
-          </div>
-
-          <div className="apartment-form-group">
-            <label>Floor</label>
-
-            <input
-              type="number"
-              value={floor}
-              onChange={e => setFloor(e.target.value)}
-              placeholder="Example: 1"
-              required
-            />
-          </div>
-
-          <button type="submit" className="create-apartment-button">
-            Create Apartment
+          <button
+            type="submit"
+            className="create-apartment-button"
+            disabled={creating}
+          >
+            {creating ? 'Creating...' : '+ Create Apartment'}
           </button>
         </form>
-      </div>
+      </section>
 
-      {/* All Apartments */}
+      {/* Apartment Records */}
+      <section className="apartments-list">
+        <div className="apartment-section-heading records-heading">
+          <div>
+            <h2>Apartment Records</h2>
+            <p>Manage apartment availability and resident assignments.</p>
+          </div>
 
-      <div className="apartments-list">
-        <h2>All Apartments</h2>
+          <span className="apartment-count">
+            {apartments.length}{' '}
+            {apartments.length === 1 ? 'Apartment' : 'Apartments'}
+          </span>
+        </div>
 
-        {loading && <p className="loading-apartments">Loading apartments...</p>}
+        {loading && (
+          <div className="apartments-state-card">
+            <p>Loading apartments...</p>
+          </div>
+        )}
 
         {!loading && apartments.length === 0 && (
-          <div className="empty-apartments">
-            <p>No apartments available.</p>
+          <div className="apartments-state-card">
+            <h3>No Apartments Yet</h3>
+            <p>Create your first apartment using the form above.</p>
           </div>
         )}
 
@@ -239,83 +296,99 @@ const AdminApartments = () => {
             <table className="apartments-table">
               <thead>
                 <tr>
-                  <th>Apartment</th>
-                  <th>Building</th>
-                  <th>Floor</th>
-                  <th>Status</th>
-                  <th>Resident</th>
-                  <th>Action</th>
+                  <th>APARTMENT</th>
+                  <th>BUILDING</th>
+                  <th>FLOOR</th>
+                  <th>STATUS</th>
+                  <th>RESIDENT</th>
+                  <th>ACTIONS</th>
                 </tr>
               </thead>
 
               <tbody>
-                {apartments.map(apartment => (
-                  <tr key={apartment._id}>
-                    <td className="apartment-number">
-                      {apartment.apartmentNumber}
-                    </td>
+                {apartments.map(apartment => {
+                  const isOccupied =
+                    apartment.status === 'occupied' ||
+                    Boolean(apartment.resident);
 
-                    <td>{apartment.building}</td>
+                  return (
+                    <tr key={apartment._id}>
+                      <td>
+                        <span className="apartment-number">
+                          {apartment.apartmentNumber}
+                        </span>
+                      </td>
 
-                    <td>{apartment.floor}</td>
+                      <td>{apartment.building}</td>
 
-                    <td>
-                      <span
-                        className={
-                          apartment.status === 'occupied'
-                            ? 'status-occupied'
-                            : 'status-available'
-                        }
-                      >
-                        {apartment.status === 'occupied'
-                          ? 'Occupied'
-                          : 'Available'}
-                      </span>
-                    </td>
+                      <td>{apartment.floor}</td>
 
-                    <td>
-                      {apartment.resident ? (
-                        <div className="assigned-resident">
-                          <strong>{apartment.resident.name}</strong>
-                          <br></br>
-                          <small>{apartment.resident.email}</small>
-                        </div>
-                      ) : (
-                        <select
-                          className="resident-select"
-                          value={selectedResidents[apartment._id] || ''}
-                          onChange={e =>
-                            handleResidentChange(apartment._id, e.target.value)
+                      <td>
+                        <span
+                          className={
+                            isOccupied ? 'status-occupied' : 'status-available'
                           }
                         >
-                          <option value="">Select Resident</option>
+                          <span className="status-dot"></span>
+                          {isOccupied ? 'Occupied' : 'Available'}
+                        </span>
+                      </td>
 
-                          {residents.map(resident => (
-                            <option key={resident._id} value={resident._id}>
-                              {resident.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </td>
+                      <td>
+                        {apartment.resident ? (
+                          <div className="assigned-resident">
+                            <strong>{apartment.resident.name}</strong>
+                            <small>{apartment.resident.email}</small>
+                          </div>
+                        ) : (
+                          <select
+                            className="resident-select"
+                            aria-label={`Select resident for ${apartment.apartmentNumber}`}
+                            value={selectedResidents[apartment._id] || ''}
+                            onChange={event =>
+                              handleResidentChange(
+                                apartment._id,
+                                event.target.value
+                              )
+                            }
+                          >
+                            <option value="">Select Resident</option>
 
-                    <td>
-                      {!apartment.resident && (
-                        <button
-                          className="assign-resident-button"
-                          onClick={() => handleAssignResident(apartment._id)}
-                        >
-                          Assign
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                            {residents.map(resident => (
+                              <option key={resident._id} value={resident._id}>
+                                {resident.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+
+                      <td>
+                        {!apartment.resident && (
+                          <button
+                            type="button"
+                            className="assign-resident-button"
+                            disabled={assigningId === apartment._id}
+                            onClick={() => handleAssignResident(apartment._id)}
+                          >
+                            {assigningId === apartment._id
+                              ? 'Assigning...'
+                              : 'Assign'}
+                          </button>
+                        )}
+
+                        {apartment.resident && (
+                          <span className="assigned-label">Assigned</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };
