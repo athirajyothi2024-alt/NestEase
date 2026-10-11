@@ -3,6 +3,7 @@ const User = require('../models/User');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcryptjs');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -135,7 +136,7 @@ router.get('/residents', protect, authorize('admin'), async (req, res) => {
 // Admin can create a new resident
 router.post('/residents', protect, authorize('admin'), async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, apartmentNumber } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -143,7 +144,11 @@ router.post('/residents', protect, authorize('admin'), async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
       return res.status(400).json({
@@ -151,15 +156,19 @@ router.post('/residents', protect, authorize('admin'), async (req, res) => {
       });
     }
 
+    // Hash the password before saving it
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const resident = await User.create({
       name,
-      email,
-      password,
+      email: normalizedEmail,
+      password: hashedPassword,
       phone,
+      apartmentNumber,
       role: 'resident',
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Resident created successfully',
       resident: {
         _id: resident._id,
@@ -173,7 +182,7 @@ router.post('/residents', protect, authorize('admin'), async (req, res) => {
   } catch (error) {
     console.error('Create resident error:', error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: 'Failed to create resident',
       error: error.message,
     });
